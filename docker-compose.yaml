@@ -68,9 +68,8 @@ services:
     build:
       context: .
       dockerfile: docker/golang/Dockerfile
-    environment:
-      - MONGODB_URI=mongodb://root:rootPass@medusa-mongo:27017
-      - REDIS_URI=redis://:eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81@medusa-cache:6379
+    env_file:
+      - .env.dev
     ports:
       - "8000:8000"
     networks:
