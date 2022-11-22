@@ -1,77 +1,95 @@
 package webserver
 
 import (
-    "context"
-    "fmt"
-    "github.com/gin-gonic/gin"
-    log "github.com/sirupsen/logrus"
-    "medusa/src/api/routing"
-    "medusa/src/common/env"
-    "medusa/src/common/logger"
-    "net/http"
-    "os"
-    "os/signal"
-    "time"
+	"context"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+	"medusa/src/api/auth"
+	"medusa/src/api/routing"
+	"medusa/src/common/env"
+	"medusa/src/common/logger"
+	"medusa/src/common/middleware"
+	"medusa/src/common/middleware/rateLimit"
+	"medusa/src/common/middleware/requestLog"
+	"net/http"
+	"os"
+	"os/signal"
+	"time"
 )
 
 func Boot(envFiles ...string) {
-    env.Load(envFiles...)
+	env.Load(envFiles...)
 
-    logger.SetupErrorLog()
-    router := gin.New()
+	logger.SetupErrorLog()
+	router := gin.New()
 
-    router.Use(gin.Recovery())
-    accessLog := logger.SetupAccessLog()
+	middlewares := []middleware.RouterMiddleware{
+		&rateLimit.RateLimit{},
+		&requestLog.RequestLog{},
+	}
 
-    router.Use(func(context *gin.Context) {
-        context.Next()
+	for _, middle := range middlewares {
+		middle.Register(router)
+	}
 
-        accessLog.WithFields(log.Fields{
-            "ip":     context.Request.RemoteAddr,
-            "url":    context.Request.URL.Path,
-            "method": context.Request.Method,
-            "status": context.Writer.Status(),
-        }).Info("")
-    })
+	router.Use(gin.Recovery())
 
-    routing.MapUrls(router)
+	authService := auth.NewAuth()
 
-    log.Info("Starting server on port ", os.Getenv("SERVER_PORT"))
+	router.Use(func(context *gin.Context) {
+		authenticationError := authService.Authenticate(context.Request)
+		if authenticationError != nil {
+			context.AbortWithStatusJSON(http.StatusUnauthorized, authenticationError)
+		}
+		context.Next()
+	})
+	router.Use(func(context *gin.Context) {
+		authorizationError := authService.Authorize(context.Request)
+		if authorizationError != nil {
+			context.AbortWithStatusJSON(http.StatusForbidden, authorizationError)
+		}
+		context.Next()
+	})
 
-    done := make(chan bool, 1)
-    quit := make(chan os.Signal, 1)
+	routing.MapUrls(router)
 
-    signal.Notify(quit, os.Interrupt)
+	log.Info("Starting server on port ", os.Getenv("SERVER_PORT"))
 
-    server := &http.Server{
-        Addr:    fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")),
-        Handler: router,
-    }
+	done := make(chan bool, 1)
+	quit := make(chan os.Signal, 1)
 
-    go gracefulShutdown(
-        server,
-        quit,
-        done,
-    )
+	signal.Notify(quit, os.Interrupt)
 
-    if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-        log.Fatal(err)
-    }
+	server := &http.Server{
+		Addr:    fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")),
+		Handler: router,
+	}
 
-    log.Info("Graceful shutdown completed")
+	go gracefulShutdown(
+		server,
+		quit,
+		done,
+	)
+
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatal(err)
+	}
+
+	log.Info("Graceful shutdown completed")
 }
 
 func gracefulShutdown(server *http.Server, quit <-chan os.Signal, done chan<- bool) {
-    <-quit
-    log.Info("Server is shutting down...")
+	<-quit
+	log.Info("Server is shutting down...")
 
-    ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-    defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
-    server.SetKeepAlivesEnabled(false)
-    if err := server.Shutdown(ctx); err != nil {
-        log.Fatalf("Could not gracefully shutdown the server: %v", err)
-    }
+	server.SetKeepAlivesEnabled(false)
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Could not gracefully shutdown the server: %v", err)
+	}
 
-    close(done)
+	close(done)
 }
