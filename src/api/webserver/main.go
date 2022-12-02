@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"medusa/src/api/auth"
+	"medusa/src/api/config"
 	"medusa/src/api/routing"
 	"medusa/src/common/env"
 	"medusa/src/common/logger"
@@ -20,6 +21,8 @@ import (
 
 func Boot(envFiles ...string) {
 	env.Load(envFiles...)
+	webConfig := &config.WebServerConfig{}
+	config.Load("web", webConfig)
 
 	logger.SetupErrorLog()
 	router := gin.New()

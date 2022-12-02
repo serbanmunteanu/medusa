@@ -1,0 +1,69 @@
+package mongodb
+
+import (
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"medusa/src/api/config"
+	"time"
+)
+
+type Client struct {
+	database         *mongo.Database
+	timeoutInSeconds time.Duration
+}
+
+func NewMongoClient(config config.MongoConfig) (*Client, error) {
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(config.Url))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Client{
+		client.Database(config.Database),
+		time.Duration(config.TimeOutInSeconds),
+	}, nil
+}
+
+func (client *Client) Insert(collection string, record interface{}) (interface{}, error) {
+	coll := client.database.Collection(collection)
+
+	ctx, cancel := context.WithTimeout(context.Background(), client.timeoutInSeconds*time.Second)
+	defer cancel()
+
+	result, err := coll.InsertOne(ctx, record)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result.InsertedID, nil
+}
+
+func (client *Client) FindOne(collection string, conditions bson.M, result interface{}) error {
+	coll := client.database.Collection(collection)
+
+	ctx, cancel := context.WithTimeout(context.Background(), client.timeoutInSeconds*time.Second)
+	defer cancel()
+
+	res := coll.FindOne(ctx, conditions).Decode(result)
+
+	return res
+}
+
+func (client *Client) UpdateByID(collection string, id interface{}, model interface{}) error {
+	coll := client.database.Collection(collection)
+
+	ctx, cancel := context.WithTimeout(context.Background(), client.timeoutInSeconds*time.Second)
+	defer cancel()
+
+	_, err := coll.UpdateByID(
+		ctx,
+		id,
+		model,
+	)
+
+	return err
+}

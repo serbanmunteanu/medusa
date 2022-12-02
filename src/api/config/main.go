@@ -14,6 +14,7 @@ type WorkerServerConfig struct {
 }
 
 type WebServerConfig struct {
+	MongoConfig MongoConfig `yaml:"mongoConfig"`
 }
 
 type Queue struct {
@@ -26,7 +27,18 @@ type RedisConfig struct {
 	Password string `yaml:"password"`
 }
 
-func LoadConfig(configType string, config interface{}) {
+type MongoConfig struct {
+	Url              string      `yaml:"url"`
+	TimeOutInSeconds int         `yaml:"timeOutInSeconds"`
+	Database         string      `yaml:"database"`
+	Collections      Collections `yaml:"collections"`
+}
+
+type Collections struct {
+	UserCollection string `yaml:"userCollection"`
+}
+
+func Load(configType string, config interface{}) {
 	var configPath string
 
 	switch configType {

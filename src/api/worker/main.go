@@ -10,7 +10,7 @@ func Boot(envFiles ...string) {
 	env.Load(envFiles...)
 
 	workerConfig := &config.WorkerServerConfig{}
-	config.LoadConfig("worker", workerConfig)
+	config.Load("worker", workerConfig)
 
 	handlersMap := make(HandlersMap)
 	redisOptions := asynq.RedisClientOpt{
