@@ -11,3 +11,5 @@ queues:
     priority: 3
   - name: "low"
     priority: 1
+workerChannel:
+  statusChannelKey: "channel:status"

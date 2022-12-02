@@ -5,14 +5,14 @@ import (
 	"medusa/src/api/config"
 )
 
-type HandlersMap map[string]asynq.Handler
+type HandlerMap map[string]asynq.Handler
 
 type workServer struct {
 	server *asynq.Server
 	mux    *asynq.ServeMux
 }
 
-func NewWorkServer(redisOptions asynq.RedisClientOpt, config config.WorkerServerConfig) *workServer {
+func NewWorkServer(redisOptions asynq.RedisClientOpt, config *config.WorkerServerConfig) *workServer {
 	var queues map[string]int
 
 	if config.UseCustomQueue {
@@ -38,7 +38,7 @@ func NewWorkServer(redisOptions asynq.RedisClientOpt, config config.WorkerServer
 	}
 }
 
-func (ws *workServer) RegisterHandlers(handlersMap HandlersMap) {
+func (ws *workServer) RegisterHandlers(handlersMap HandlerMap) {
 	for key, handler := range handlersMap {
 		ws.mux.Handle(key, handler)
 	}

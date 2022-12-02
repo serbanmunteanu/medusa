@@ -3,6 +3,7 @@ package worker
 import (
 	"github.com/hibiken/asynq"
 	"medusa/src/api/config"
+	"medusa/src/api/worker/handlers"
 	"medusa/src/common/env"
 )
 
@@ -12,15 +13,28 @@ func Boot(envFiles ...string) {
 	workerConfig := &config.WorkerServerConfig{}
 	config.Load("worker", workerConfig)
 
-	handlersMap := make(HandlersMap)
-	redisOptions := asynq.RedisClientOpt{
+	workServerInstance := NewWorkServer(asynq.RedisClientOpt{
 		Addr:     workerConfig.RedisConfig.Addr,
 		Password: workerConfig.RedisConfig.Password,
-	}
-	workServerInstance := NewWorkServer(redisOptions, config.WorkerServerConfig{})
-	workServerInstance.RegisterHandlers(handlersMap)
+	}, workerConfig)
+	handlerMap, err := getHandlers(&workerConfig.WorkerChannel)
 
-	if err := workServerInstance.Run(); err != nil {
+	if err != nil {
 		panic(err)
 	}
+
+	workServerInstance.RegisterHandlers(handlerMap)
+
+	if err = workServerInstance.Run(); err != nil {
+		panic(err)
+	}
+}
+
+func getHandlers(config *config.WorkerChannel) (HandlerMap, error) {
+	handlerMap := make(HandlerMap)
+
+	statusProcessor := handlers.NewStatusProcessor()
+	handlerMap[config.StatusChannelKey] = statusProcessor
+
+	return handlerMap, nil
 }

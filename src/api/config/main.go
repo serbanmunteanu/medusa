@@ -6,11 +6,12 @@ import (
 )
 
 type WorkerServerConfig struct {
-	RedisConfig    RedisConfig `yaml:"redisConfig"`
-	UseCustomQueue bool        `yaml:"useCustomQueue"`
-	Queues         []Queue     `yaml:"queues"`
-	Concurrency    int         `yaml:"concurrency"`
-	StrictPriority bool        `yaml:"strictPriority"`
+	RedisConfig    RedisConfig   `yaml:"redisConfig"`
+	UseCustomQueue bool          `yaml:"useCustomQueue"`
+	Queues         []Queue       `yaml:"queues"`
+	Concurrency    int           `yaml:"concurrency"`
+	StrictPriority bool          `yaml:"strictPriority"`
+	WorkerChannel  WorkerChannel `yaml:"workerChannel"`
 }
 
 type WebServerConfig struct {
@@ -36,6 +37,10 @@ type MongoConfig struct {
 
 type Collections struct {
 	UserCollection string `yaml:"userCollection"`
+}
+
+type WorkerChannel struct {
+	StatusChannelKey string `yaml:"statusChannelKey"`
 }
 
 func Load(configType string, config interface{}) {
