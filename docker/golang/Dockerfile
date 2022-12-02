@@ -10,4 +10,4 @@ WORKDIR /app
 COPY --from=builder /app/medusa .
 COPY --from=builder /app/src/api/docs/swagger.json ./docs/swagger.json
 EXPOSE 8000
-ENTRYPOINT ["./medusa"]
+ENTRYPOINT ["./medusa --serverType web"]

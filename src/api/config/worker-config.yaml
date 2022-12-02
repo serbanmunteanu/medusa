@@ -1,0 +1,13 @@
+useCustomerQueue: true
+concurrency: 0
+strictPriority: true
+redisConfig:
+  addr: "localhost:6379"
+  password: "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81"
+queues:
+  - name: "critical"
+    priority: 6
+  - name: "medium"
+    priority: 3
+  - name: "low"
+    priority: 1

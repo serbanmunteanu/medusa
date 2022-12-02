@@ -1,6 +1,7 @@
 DOCKER_COMPOSE=docker-compose
 DC_RUN=$(DOCKER_COMPOSE) run --rm -T
 DC_EXEC=$(DOCKER_COMPOSE) exec -T
+DOCKER=docker
 
 install: docker-pull docker-build docker-up
 
@@ -16,3 +17,5 @@ stop docker-stop:
 	$(DOCKER_COMPOSE) stop
 logs docker-logs:
 	$(DOCKER_COMPOSE) logs -f
+stop-api:
+	$(DOCKER) stop medusa-api
