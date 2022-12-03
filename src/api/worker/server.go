@@ -38,8 +38,8 @@ func NewWorkServer(redisOptions asynq.RedisClientOpt, config *config.WorkerServe
 	}
 }
 
-func (ws *workServer) RegisterHandlers(handlersMap HandlerMap) {
-	for key, handler := range handlersMap {
+func (ws *workServer) RegisterHandlers(handlerMap HandlerMap) {
+	for key, handler := range handlerMap {
 		ws.mux.Handle(key, handler)
 	}
 }

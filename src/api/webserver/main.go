@@ -55,7 +55,7 @@ func Boot(envFiles ...string) {
 		context.Next()
 	})
 
-	routing.MapUrls(router)
+	routing.MapUrls(router, webConfig)
 
 	log.Info("Starting server on port ", os.Getenv("SERVER_PORT"))
 

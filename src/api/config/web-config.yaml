@@ -1,5 +1,5 @@
 mongoConfig:
-  url: "mongodb://localhost:27017"
+  url: "mongodb://root:rootPass@localhost:27017"
   timeOutInSeconds: 30
   database: "medusa"
   collections:

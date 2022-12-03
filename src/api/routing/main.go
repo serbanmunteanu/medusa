@@ -2,37 +2,46 @@ package routing
 
 import (
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
-	"net/http"
-	"os"
-	"path/filepath"
+	"medusa/src/api/auth"
+	"medusa/src/api/config"
+	"medusa/src/api/swagger"
+	"medusa/src/common/mongodb"
+	"medusa/src/common/users"
 )
 
-func MapUrls(router *gin.Engine) {
-	router.GET("/swagger", func(context *gin.Context) {
-		filePath, err := getSwaggerFilepath()
-		if err != nil {
-			log.Error(err)
-			context.AbortWithStatus(http.StatusInternalServerError)
-		}
-		swaggerDocs, err := os.ReadFile(filePath)
-		if err != nil {
-			log.Error(err)
-			context.AbortWithStatus(http.StatusInternalServerError)
-		}
-
-		context.Data(
-			http.StatusOK,
-			gin.MIMEJSON,
-			swaggerDocs,
-		)
-	})
+type RouteRegister interface {
+	Register(routerGroup *gin.RouterGroup)
 }
 
-func getSwaggerFilepath() (string, error) {
-	if os.Getenv("APP_ENV") == "prod" {
-		return filepath.Abs("./docs/swagger.json")
+type RouteGroup struct {
+	groupPrefix    string
+	routeRegisters []RouteRegister
+}
+
+func MapUrls(router *gin.Engine, config *config.WebServerConfig) {
+	mongoClient, err := mongodb.NewMongoClient(config.MongoConfig)
+	if err != nil {
+		panic(err)
+	}
+	userRepository := users.NewUserRepository(mongoClient, config.MongoConfig.Collections.UserCollection)
+	routeGroups := []RouteGroup{
+		{
+			groupPrefix: "",
+			routeRegisters: []RouteRegister{
+				swagger.NewSwaggerController(),
+			},
+		},
+		{
+			groupPrefix: "/api",
+			routeRegisters: []RouteRegister{
+				auth.NewAuthController(userRepository),
+			},
+		},
 	}
 
-	return filepath.Abs("api/docs/swagger.json")
+	for _, routeGroup := range routeGroups {
+		for _, route := range routeGroup.routeRegisters {
+			route.Register(router.Group(routeGroup.groupPrefix))
+		}
+	}
 }
