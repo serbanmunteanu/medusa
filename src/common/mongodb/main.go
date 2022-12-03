@@ -67,3 +67,28 @@ func (client *Client) UpdateByID(collection string, id interface{}, model interf
 
 	return err
 }
+
+func (client *Client) Find(collection string, filters bson.M) ([]bson.M, error) {
+	coll := client.database.Collection(collection)
+
+	ctx, cancel := context.WithTimeout(context.Background(), client.timeoutInSeconds*time.Second)
+	defer cancel()
+
+	cursor, err := coll.Find(ctx, filters)
+
+	if err != nil {
+		defer cursor.Close(ctx)
+	}
+
+	var results []bson.M
+	for cursor.Next(ctx) {
+		var result bson.M
+		err = cursor.Decode(&result)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	return results, err
+}

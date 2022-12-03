@@ -5,8 +5,10 @@ import (
 	"medusa/src/api/auth"
 	"medusa/src/api/config"
 	"medusa/src/api/swagger"
+	apiUser "medusa/src/api/user"
 	"medusa/src/common/mongodb"
-	"medusa/src/common/users"
+	commonUser "medusa/src/common/user"
+	"medusa/src/common/utils"
 )
 
 type RouteRegister interface {
@@ -23,7 +25,8 @@ func MapUrls(router *gin.Engine, config *config.WebServerConfig) {
 	if err != nil {
 		panic(err)
 	}
-	userRepository := users.NewUserRepository(mongoClient, config.MongoConfig.Collections.UserCollection)
+	userRepository := commonUser.NewUserRepository(mongoClient, config.MongoConfig.Collections.UserCollection)
+	jwt := utils.NewJwt(config.JwtConfig)
 	routeGroups := []RouteGroup{
 		{
 			groupPrefix: "",
@@ -34,7 +37,8 @@ func MapUrls(router *gin.Engine, config *config.WebServerConfig) {
 		{
 			groupPrefix: "/api",
 			routeRegisters: []RouteRegister{
-				auth.NewAuthController(userRepository),
+				auth.NewAuthController(userRepository, jwt),
+				apiUser.NewUserController(userRepository),
 			},
 		},
 	}

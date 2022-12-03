@@ -16,6 +16,7 @@ type WorkerServerConfig struct {
 
 type WebServerConfig struct {
 	MongoConfig MongoConfig `yaml:"mongoConfig"`
+	JwtConfig   JwtConfig   `yaml:"jwtConfig"`
 }
 
 type Queue struct {
@@ -41,6 +42,12 @@ type Collections struct {
 
 type WorkerChannel struct {
 	StatusChannelKey string `yaml:"statusChannelKey"`
+}
+
+type JwtConfig struct {
+	Ttl             int    `yaml:"ttl"`
+	AccessTokenKey  string `yaml:"accessTokenKey"`
+	RefreshTokenKey string `yaml:"refreshTokenKey"`
 }
 
 func Load(configType string, config interface{}) {
