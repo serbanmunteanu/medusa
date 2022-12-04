@@ -17,6 +17,7 @@ type WorkerServerConfig struct {
 type WebServerConfig struct {
 	MongoConfig MongoConfig `yaml:"mongoConfig"`
 	JwtConfig   JwtConfig   `yaml:"jwtConfig"`
+	RedisURL    string      `yaml:"redisUrl"`
 }
 
 type Queue struct {

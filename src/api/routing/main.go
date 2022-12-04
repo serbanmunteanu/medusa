@@ -7,6 +7,7 @@ import (
 	"medusa/src/api/swagger"
 	apiUser "medusa/src/api/user"
 	"medusa/src/common/mongodb"
+	"medusa/src/common/redis"
 	commonUser "medusa/src/common/user"
 	"medusa/src/common/utils"
 )
@@ -26,6 +27,10 @@ func Initialize(router *gin.Engine, config *config.WebServerConfig) {
 	if err != nil {
 		panic(err)
 	}
+	redisClient, err := redis.NewRedisService(config.RedisURL)
+	if err != nil {
+		panic(err)
+	}
 	userRepository := commonUser.NewUserRepository(mongoClient, config.MongoConfig.Collections.UserCollection)
 	jwt := utils.NewJwt(config.JwtConfig)
 	authHandler := auth.NewAuthHandler(jwt, userRepository)
@@ -41,7 +46,7 @@ func Initialize(router *gin.Engine, config *config.WebServerConfig) {
 		{
 			groupPrefix: "/api",
 			routeRegisters: []RouteRegister{
-				apiUser.NewUserController(userRepository),
+				apiUser.NewUserController(userRepository, redisClient),
 			},
 			middlewares: []gin.HandlerFunc{
 				authHandler.GetAuthentication(),
