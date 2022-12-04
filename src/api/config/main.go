@@ -45,9 +45,9 @@ type WorkerChannel struct {
 }
 
 type JwtConfig struct {
-	Ttl             int    `yaml:"ttl"`
-	AccessTokenKey  string `yaml:"accessTokenKey"`
-	RefreshTokenKey string `yaml:"refreshTokenKey"`
+	Ttl        int    `yaml:"ttl"`
+	PrivateKey string `yaml:"privateKey"`
+	PublicKey  string `yaml:"publicKey"`
 }
 
 func Load(configType string, config interface{}) {

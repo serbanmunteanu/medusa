@@ -31,5 +31,5 @@ func (us *UserController) GetAll(context *gin.Context) {
 		return
 	}
 
-	context.JSON(http.StatusOK, gin.H{"status": "success", "users": users})
+	context.JSON(http.StatusOK, gin.H{"status": "success", "users": MapToUsersResponse(users)})
 }

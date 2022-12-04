@@ -18,34 +18,45 @@ type RouteRegister interface {
 type RouteGroup struct {
 	groupPrefix    string
 	routeRegisters []RouteRegister
+	middlewares    []gin.HandlerFunc
 }
 
-func MapUrls(router *gin.Engine, config *config.WebServerConfig) {
+func Initialize(router *gin.Engine, config *config.WebServerConfig) {
 	mongoClient, err := mongodb.NewMongoClient(config.MongoConfig)
 	if err != nil {
 		panic(err)
 	}
 	userRepository := commonUser.NewUserRepository(mongoClient, config.MongoConfig.Collections.UserCollection)
 	jwt := utils.NewJwt(config.JwtConfig)
+	authHandler := auth.NewAuthHandler(jwt, userRepository)
 	routeGroups := []RouteGroup{
 		{
 			groupPrefix: "",
 			routeRegisters: []RouteRegister{
 				swagger.NewSwaggerController(),
+				auth.NewAuthController(userRepository, jwt),
 			},
+			middlewares: []gin.HandlerFunc{},
 		},
 		{
 			groupPrefix: "/api",
 			routeRegisters: []RouteRegister{
-				auth.NewAuthController(userRepository, jwt),
 				apiUser.NewUserController(userRepository),
+			},
+			middlewares: []gin.HandlerFunc{
+				authHandler.GetAuthentication(),
+				authHandler.GetAuthorization(),
 			},
 		},
 	}
 
 	for _, routeGroup := range routeGroups {
+		group := router.Group(routeGroup.groupPrefix)
+		for _, middle := range routeGroup.middlewares {
+			group.Use(middle)
+		}
 		for _, route := range routeGroup.routeRegisters {
-			route.Register(router.Group(routeGroup.groupPrefix))
+			route.Register(group)
 		}
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"medusa/src/api/auth"
 	"medusa/src/api/config"
 	"medusa/src/api/routing"
 	"medusa/src/common/env"
@@ -38,24 +37,7 @@ func Boot(envFiles ...string) {
 
 	router.Use(gin.Recovery())
 
-	authService := auth.NewAuth()
-
-	router.Use(func(context *gin.Context) {
-		authenticationError := authService.Authenticate(context.Request)
-		if authenticationError != nil {
-			context.AbortWithStatusJSON(http.StatusUnauthorized, authenticationError)
-		}
-		context.Next()
-	})
-	router.Use(func(context *gin.Context) {
-		authorizationError := authService.Authorize(context.Request)
-		if authorizationError != nil {
-			context.AbortWithStatusJSON(http.StatusForbidden, authorizationError)
-		}
-		context.Next()
-	})
-
-	routing.MapUrls(router, webConfig)
+	routing.Initialize(router, webConfig)
 
 	log.Info("Starting server on port ", os.Getenv("SERVER_PORT"))
 

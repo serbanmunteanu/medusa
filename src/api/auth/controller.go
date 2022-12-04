@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	apiUser "medusa/src/api/user"
 	commonUser "medusa/src/common/user"
 	"medusa/src/common/utils"
 	"net/http"
@@ -60,11 +61,11 @@ func (ac *AuthController) singUp(context *gin.Context) {
 		return
 	}
 
-	accessToken, err := ac.jwt.CreateJwt(newUser)
+	accessToken, err := ac.jwt.CreateJwt(newUser.ID)
 
 	context.JSON(
 		http.StatusCreated,
-		gin.H{"status": "success", "user": MapToUserResponse(newUser), "accessToken": accessToken},
+		gin.H{"status": "success", "user": apiUser.MapToUserResponse(newUser), "accessToken": accessToken},
 	)
 }
 
@@ -92,7 +93,7 @@ func (ac *AuthController) signIn(context *gin.Context) {
 		return
 	}
 
-	accessToken, err := ac.jwt.CreateJwt(user)
+	accessToken, err := ac.jwt.CreateJwt(user.ID)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"status": "fail", "message": err.Error()})
 		return
