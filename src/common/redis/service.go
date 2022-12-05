@@ -39,5 +39,9 @@ func (s *Service) Get(key string, value interface{}) error {
 }
 
 func (s *Service) Set(key string, value interface{}, ttl time.Duration) error {
-	return s.rds.Set(context.Background(), key, value, ttl).Err()
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	return s.rds.Set(context.Background(), key, bytes, ttl).Err()
 }
